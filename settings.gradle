@@ -1,0 +1,6 @@
+rootProject.name = 'spolks'
+
+
+include(':server')
+include(':client')
+
