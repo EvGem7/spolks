@@ -1,10 +1,10 @@
-package me.evgem.server.connection.listener.serverSocket
+package me.evgem.domain.connection.socket
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import me.evgem.domain.message.IMessageDecoder
 import me.evgem.domain.message.IMessageEncoder
-import me.evgem.domain.model.IConnection
+import me.evgem.domain.connection.IConnection
 import me.evgem.domain.model.Message
 import me.evgem.domain.utils.Log
 import me.evgem.domain.utils.doSuspend

@@ -2,18 +2,31 @@
 
 package me.evgem.client
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import me.evgem.client.command.parser.CommandParser
+import me.evgem.client.di.getCommandHandlerProvider
+import me.evgem.client.di.getConnector
+import me.evgem.client.model.Command
+import me.evgem.domain.utils.Log
+import java.util.*
 
 fun main() {
-    GlobalScope.launch {
-        println("client 1")
-        delay(2000L)
-        println("client 2")
+    val scanner = Scanner(System.`in`)
+
+    val client = Client(
+        getCommandHandlerProvider(),
+        getConnector(),
+    )
+    client.start()
+    Log.i("client started")
+
+    var command = CommandParser.parse(scanner.nextLine())
+    while (command != Command.Stop) {
+        if (command != null) {
+            client.performCommand(command)
+        }
+        command = CommandParser.parse(scanner.nextLine())
     }
-    runBlocking {
-        delay(3000L)
-    }
+
+    client.stop()
+    Log.i("client stopped")
 }

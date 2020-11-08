@@ -1,6 +1,6 @@
 package me.evgem.server.connection.handler.impl
 
-import me.evgem.domain.model.IConnection
+import me.evgem.domain.connection.IConnection
 import me.evgem.domain.model.IMessageHandler
 import me.evgem.domain.model.Message
 

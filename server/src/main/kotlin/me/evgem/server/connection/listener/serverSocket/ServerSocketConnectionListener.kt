@@ -3,19 +3,16 @@ package me.evgem.server.connection.listener.serverSocket
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.suspendCancellableCoroutine
 import me.evgem.domain.di.getMessageDecoder
 import me.evgem.domain.di.getMessageEncoder
-import me.evgem.domain.model.IConnection
+import me.evgem.domain.connection.IConnection
+import me.evgem.domain.connection.socket.SocketConnection
 import me.evgem.domain.utils.Log
 import me.evgem.domain.utils.safeResume
 import me.evgem.server.connection.listener.IConnectionListener
 import java.net.ServerSocket
 import java.net.Socket
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 @ExperimentalCoroutinesApi
 class ServerSocketConnectionListener : IConnectionListener {
