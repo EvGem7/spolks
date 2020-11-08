@@ -2,18 +2,27 @@
 
 package me.evgem.server
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import me.evgem.domain.utils.Log
+import me.evgem.server.di.getConnectionListener
+import me.evgem.server.di.getMessageHandlerProvider
+import java.util.*
 
 fun main() {
-    GlobalScope.launch {
-        println("server 1")
-        delay(2000L)
-        println("server 2")
+    val server = Server(
+        getConnectionListener(),
+        getMessageHandlerProvider(),
+    )
+    server.start()
+    Log.i("server started")
+
+    Log.i("print \"stop\" to stop the server")
+    val scanner = Scanner(System.`in`)
+    for (cmd in scanner) {
+        if (cmd == "stop") {
+            break
+        }
     }
-    runBlocking {
-        delay(3000L)
-    }
+
+    server.stop()
+    Log.i("server stopped")
 }

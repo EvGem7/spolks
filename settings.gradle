@@ -3,4 +3,5 @@ rootProject.name = 'spolks'
 
 include(':server')
 include(':client')
+include(':domain')
 
