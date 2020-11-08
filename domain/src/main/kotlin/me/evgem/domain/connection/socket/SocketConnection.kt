@@ -9,6 +9,7 @@ import me.evgem.domain.model.Message
 import me.evgem.domain.utils.Log
 import me.evgem.domain.utils.doSuspend
 import me.evgem.domain.utils.withTimeout
+import java.io.IOException
 import java.net.Socket
 import java.net.SocketTimeoutException
 
@@ -46,26 +47,30 @@ class SocketConnection(
     }
 
     private suspend fun tryReadBytes(): List<Byte>? = socket.doSuspend {
-        val input = getInputStream()
-        if (input.available() > 0) {
-            input.readNBytes(input.available()).toList()
-        } else {
-            try {
-                val byte = withTimeout(SUSPEND_READ_TIMEOUT) {
-                    input.read()
-                }
-                if (byte != -1) {
-                    if (input.available() > 0) {
-                        listOf(byte.toByte()) + input.readNBytes(input.available()).toList()
-                    } else {
-                        listOf(byte.toByte())
+        try {
+            val input = getInputStream()
+            if (input.available() > 0) {
+                input.readNBytes(input.available()).toList()
+            } else {
+                try {
+                    val byte = withTimeout(SUSPEND_READ_TIMEOUT) {
+                        input.read()
                     }
-                } else {
-                    null
+                    if (byte != -1) {
+                        if (input.available() > 0) {
+                            listOf(byte.toByte()) + input.readNBytes(input.available()).toList()
+                        } else {
+                            listOf(byte.toByte())
+                        }
+                    } else {
+                        null
+                    }
+                } catch (e: SocketTimeoutException) {
+                    emptyList()
                 }
-            } catch (e: SocketTimeoutException) {
-                emptyList()
             }
+        } catch (e: IOException) {
+            null
         }
     }
 }

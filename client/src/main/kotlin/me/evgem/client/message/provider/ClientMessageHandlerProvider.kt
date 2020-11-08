@@ -1,23 +1,21 @@
-package me.evgem.server.connection.handler
+package me.evgem.client.message.provider
 
+import me.evgem.client.message.handler.EchoClientHandler
 import me.evgem.domain.model.IMessageHandler
 import me.evgem.domain.model.IMessageHandlerProvider
 import me.evgem.domain.model.Message
-import me.evgem.server.connection.handler.impl.ServerEchoHandler
 
 @Suppress("UNCHECKED_CAST")
-class ServerMessageHandlerProvider : IMessageHandlerProvider {
+class ClientMessageHandlerProvider : IMessageHandlerProvider {
 
     override fun <M : Message> provide(message: M): IMessageHandler<M> = when (message as Message) {
-        is Message.Echo -> ServerEchoHandler
+        is Message.Echo -> EchoClientHandler
         is Message.Time -> TODO()
         is Message.Close -> TODO()
-
         is Message.DownloadRequest -> TODO()
         is Message.DownloadResponse -> TODO()
         is Message.Download -> TODO()
         is Message.DownloadFinished -> TODO()
-
         is Message.UploadRequest -> TODO()
         is Message.UploadResponse -> TODO()
         is Message.Upload -> TODO()

@@ -5,6 +5,7 @@ package me.evgem.client
 import me.evgem.client.command.parser.CommandParser
 import me.evgem.client.di.getCommandHandlerProvider
 import me.evgem.client.di.getConnector
+import me.evgem.client.di.getMessageHandlerProvider
 import me.evgem.client.model.Command
 import me.evgem.domain.utils.Log
 import java.util.*
@@ -15,6 +16,7 @@ fun main() {
     val client = Client(
         getCommandHandlerProvider(),
         getConnector(),
+        getMessageHandlerProvider()
     )
     client.start()
     Log.i("client started")
