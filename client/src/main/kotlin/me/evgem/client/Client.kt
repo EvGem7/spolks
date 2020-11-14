@@ -8,6 +8,7 @@ import me.evgem.client.model.ClientState
 import me.evgem.client.model.Command
 import me.evgem.domain.connection.IConnection
 import me.evgem.domain.model.IMessageHandlerProvider
+import me.evgem.domain.utils.singleThreadDispatcher
 
 class Client(
     private val commandHandlerProvider: ICommandHandlerProvider,
@@ -47,7 +48,7 @@ class Client(
     }
 
     private fun initScope() {
-        coroutineScope = CoroutineScope(Dispatchers.IO) + CoroutineExceptionHandler { _, throwable ->
+        coroutineScope = CoroutineScope(singleThreadDispatcher) + CoroutineExceptionHandler { _, throwable ->
             throwable.printStackTrace()
             throw throwable
         }

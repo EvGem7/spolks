@@ -20,12 +20,13 @@ class SocketConnection(
 ) : IConnection {
 
     companion object {
-        private const val SUSPEND_READ_TIMEOUT = 1000
+        private const val SUSPEND_READ_TIMEOUT = 100
     }
 
     override fun messages(): Flow<Message> = flow<Message> {
         var bytes = tryReadBytes()
         while (bytes != null) {
+            delay(1L)
             messageDecoder.decode(bytes)?.let {
                 emit(it)
             }
@@ -35,14 +36,12 @@ class SocketConnection(
             close()
         }
         Log.i("socket ${socket.inetAddress} is closed")
-    }.flowOn(Dispatchers.IO)
+    }
 
     override suspend fun send(message: Message) {
-        withContext(Dispatchers.IO) {
-            socket.doSuspend {
-                val arr = messageEncoder.encode(message).toByteArray()
-                socket.getOutputStream().write(arr)
-            }
+        socket.doSuspend {
+            val arr = messageEncoder.encode(message).toByteArray()
+            socket.getOutputStream().write(arr)
         }
     }
 

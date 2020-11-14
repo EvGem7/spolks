@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import me.evgem.domain.connection.IConnection
 import me.evgem.domain.model.IMessageHandlerProvider
+import me.evgem.domain.utils.singleThreadDispatcher
 import me.evgem.server.connection.listener.IConnectionListener
 
 class Server (
@@ -35,7 +36,7 @@ class Server (
     }
 
     private fun initScope() {
-        coroutineScope = CoroutineScope(Dispatchers.IO) + CoroutineExceptionHandler { _, throwable ->
+        coroutineScope = CoroutineScope(singleThreadDispatcher) + CoroutineExceptionHandler { _, throwable ->
             throwable.printStackTrace()
             throw throwable
         }
