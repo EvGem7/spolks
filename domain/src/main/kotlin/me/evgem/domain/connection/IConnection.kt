@@ -8,4 +8,6 @@ interface IConnection {
     fun messages(): Flow<Message>
 
     suspend fun send(message: Message)
+
+    suspend fun close()
 }

@@ -44,6 +44,7 @@ class Client(
             connection.messages().collect {
                 messageHandlerProvider.provide(it).handle(it, connection)
             }
+            clientState = clientState.copy(connection = null)
         }
     }
 

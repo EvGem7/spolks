@@ -45,6 +45,12 @@ class SocketConnection(
         }
     }
 
+    override suspend fun close() {
+        socket.doSuspend {
+            close()
+        }
+    }
+
     private suspend fun tryReadBytes(): ByteArray? = socket.doSuspend {
         try {
             val input = getInputStream()
