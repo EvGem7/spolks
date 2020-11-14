@@ -15,7 +15,8 @@ sealed class Message : Serializable {
 
     data class DownloadResponse(
         val filename: String,
-        val downloadId: Long?
+        val length: Long,
+        val downloadId: Long?,
     ) : Message()
 
     data class Download(
