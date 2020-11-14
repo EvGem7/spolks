@@ -17,7 +17,7 @@ sealed class Message : Serializable {
 
     data class Download(
         val downloadId: Long,
-        val data: List<Byte>
+        val data: ByteArray
     ) : Message()
 
     data class DownloadFinished(val downloadId: Long) : Message()
@@ -29,7 +29,7 @@ sealed class Message : Serializable {
 
     data class Upload(
         val uploadId: Long,
-        val data: List<Byte>
+        val data: ByteArray
     ) : Message()
 
     data class UploadFinished(val uploadId: Long) : Message()

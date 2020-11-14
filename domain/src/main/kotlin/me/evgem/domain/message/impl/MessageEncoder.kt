@@ -7,11 +7,11 @@ import java.io.ObjectOutputStream
 
 object MessageEncoder : IMessageEncoder {
 
-    override fun encode(message: Message): List<Byte> = ByteArrayOutputStream().use { byteOutput ->
+    override fun encode(message: Message): ByteArray = ByteArrayOutputStream().use { byteOutput ->
         ObjectOutputStream(byteOutput).use { objectOutput ->
             objectOutput.writeObject(message)
             objectOutput.flush()
         }
-        byteOutput.toByteArray().toList()
+        byteOutput.toByteArray()
     }
 }

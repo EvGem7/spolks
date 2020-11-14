@@ -40,16 +40,16 @@ class SocketConnection(
 
     override suspend fun send(message: Message) {
         socket.doSuspend {
-            val arr = messageEncoder.encode(message).toByteArray()
+            val arr = messageEncoder.encode(message)
             socket.getOutputStream().write(arr)
         }
     }
 
-    private suspend fun tryReadBytes(): List<Byte>? = socket.doSuspend {
+    private suspend fun tryReadBytes(): ByteArray? = socket.doSuspend {
         try {
             val input = getInputStream()
             if (input.available() > 0) {
-                input.readNBytes(input.available()).toList()
+                input.readNBytes(input.available())
             } else {
                 try {
                     val byte = withTimeout(SUSPEND_READ_TIMEOUT) {
@@ -57,15 +57,15 @@ class SocketConnection(
                     }
                     if (byte != -1) {
                         if (input.available() > 0) {
-                            listOf(byte.toByte()) + input.readNBytes(input.available()).toList()
+                            byteArrayOf(byte.toByte()) + input.readNBytes(input.available())
                         } else {
-                            listOf(byte.toByte())
+                            byteArrayOf(byte.toByte())
                         }
                     } else {
                         null
                     }
                 } catch (e: SocketTimeoutException) {
-                    emptyList()
+                    byteArrayOf()
                 }
             }
         } catch (e: IOException) {

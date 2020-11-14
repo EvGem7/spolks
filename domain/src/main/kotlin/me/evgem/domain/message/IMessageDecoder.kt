@@ -3,5 +3,5 @@ package me.evgem.domain.message
 import me.evgem.domain.model.Message
 
 interface IMessageDecoder {
-    fun decode(bytes: List<Byte>): Message?
+    fun decode(bytes: ByteArray): Message?
 }

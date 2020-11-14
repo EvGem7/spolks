@@ -13,8 +13,8 @@ class MessageDecoder : IMessageDecoder {
 
     private val byteArrayOutputStream = ByteArrayOutputStream()
 
-    override fun decode(bytes: List<Byte>): Message? {
-        byteArrayOutputStream.writeBytes(bytes.toByteArray())
+    override fun decode(bytes: ByteArray): Message? {
+        byteArrayOutputStream.writeBytes(bytes)
         val inputBytes = ByteArrayInputStream(byteArrayOutputStream.toByteArray())
         return try {
             ObjectInputStream(inputBytes).use { inputObjects ->
