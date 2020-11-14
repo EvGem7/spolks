@@ -14,7 +14,7 @@ object CommandParser {
         val type = CommandType.fromKey(parts[0]) ?: return null
         return try {
             when (type) {
-                CommandType.Echo -> Command.Echo(parts[1])
+                CommandType.Echo -> Command.Echo(cmd.drop("echo ".length))
                 CommandType.Time -> Command.Time
                 CommandType.Close -> Command.Close
                 CommandType.Download -> Command.Download(parts[1])
