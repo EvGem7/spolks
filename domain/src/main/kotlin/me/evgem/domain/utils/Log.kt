@@ -14,6 +14,10 @@ object Log {
         System.err.println("${time()} ${t.stackTraceToString()}")
     }
 
+    fun e(msg: String) {
+        System.err.println("${time()} $msg")
+    }
+
     fun d(msg: String) {
         if (DEBUG) {
             println("${time()} $msg")

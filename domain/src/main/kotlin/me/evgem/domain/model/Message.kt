@@ -13,7 +13,10 @@ sealed class Message : Serializable {
 
     data class DownloadRequest(val filename: String) : Message()
 
-    data class DownloadResponse(val downloadId: Long?) : Message()
+    data class DownloadResponse(
+        val filename: String,
+        val downloadId: Long?
+    ) : Message()
 
     data class Download(
         val downloadId: Long,
