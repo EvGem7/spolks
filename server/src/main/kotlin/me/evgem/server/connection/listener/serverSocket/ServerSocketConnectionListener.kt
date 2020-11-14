@@ -10,6 +10,7 @@ import me.evgem.domain.connection.IConnection
 import me.evgem.domain.connection.socket.SocketConnection
 import me.evgem.domain.di.getMessageDecoder
 import me.evgem.domain.di.getMessageEncoder
+import me.evgem.domain.model.Message
 import me.evgem.domain.utils.Log
 import me.evgem.domain.utils.safeResume
 import me.evgem.domain.utils.withTimeout
@@ -22,23 +23,24 @@ import java.net.SocketTimeoutException
 class ServerSocketConnectionListener : IConnectionListener {
 
     companion object {
-        private const val SUSPEND_SOCKET_TIMEOUT = 10
         private const val PORT = 9999
     }
 
     override fun connections(): Flow<IConnection> = flow<Socket> {
         val serverSocket = getServerSocket()
         while (true) {
-            delay(1L)
+            delay(1000L)
             val socket = serverSocket.suspendAccept() ?: continue
             emit(socket)
         }
-    }.map {
+    }.map { socket ->
         SocketConnection(
-            it,
+            socket,
             getMessageDecoder(),
             getMessageEncoder(),
-        )
+        ).also {
+            it.send(Message.Ping)
+        }
     }
 
     private suspend fun getServerSocket(): ServerSocket = suspendCancellableCoroutine { cont ->
@@ -49,7 +51,7 @@ class ServerSocketConnectionListener : IConnectionListener {
 
     private suspend fun ServerSocket.suspendAccept(): Socket? = suspendCancellableCoroutine { cont ->
         val socket = try {
-            withTimeout(SUSPEND_SOCKET_TIMEOUT) {
+            withTimeout(1) {
                 accept()
             }
         } catch (e: SocketTimeoutException) {

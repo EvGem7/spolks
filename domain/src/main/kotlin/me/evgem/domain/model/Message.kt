@@ -37,4 +37,7 @@ sealed class Message : Serializable {
     ) : Message()
 
     data class UploadFinished(val uploadId: Long) : Message()
+
+
+    object Ping : Message()
 }

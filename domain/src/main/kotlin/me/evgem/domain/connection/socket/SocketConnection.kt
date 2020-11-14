@@ -8,6 +8,7 @@ import me.evgem.domain.connection.IConnection
 import me.evgem.domain.model.Message
 import me.evgem.domain.utils.Log
 import me.evgem.domain.utils.doSuspend
+import me.evgem.domain.utils.singleThreadDispatcher
 import me.evgem.domain.utils.withTimeout
 import java.io.IOException
 import java.net.Socket
@@ -20,8 +21,12 @@ class SocketConnection(
 ) : IConnection {
 
     companion object {
-        private const val SUSPEND_READ_TIMEOUT = 100
+        private const val CONNECTION_LOST_TIMEOUT = 30_000L
     }
+
+    private val scope = CoroutineScope(singleThreadDispatcher)
+
+    private var checkPingJob: Job? = null
 
     override fun messages(): Flow<Message> = flow<Message> {
         var bytes = tryReadBytes()
@@ -58,7 +63,7 @@ class SocketConnection(
                 input.readNBytes(input.available())
             } else {
                 try {
-                    val byte = withTimeout(SUSPEND_READ_TIMEOUT) {
+                    val byte = withTimeout(1) {
                         input.read()
                     }
                     if (byte != -1) {
@@ -77,5 +82,28 @@ class SocketConnection(
         } catch (e: IOException) {
             null
         }
+    }.also {
+        if (it == null || it.isEmpty()) {
+            startCheckPingTimer()
+        } else {
+            stopStopTimer()
+        }
+    }
+
+    private fun startCheckPingTimer() {
+        if (checkPingJob != null) {
+            return
+        }
+        checkPingJob = scope.launch {
+            delay(CONNECTION_LOST_TIMEOUT)
+            socket.doSuspend {
+                close()
+            }
+        }
+    }
+
+    private fun stopStopTimer() {
+        checkPingJob?.cancel()
+        checkPingJob = null
     }
 }

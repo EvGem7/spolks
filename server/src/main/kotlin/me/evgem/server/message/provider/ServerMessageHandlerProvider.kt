@@ -4,6 +4,7 @@ import me.evgem.domain.model.IMessageHandler
 import me.evgem.domain.model.IMessageHandlerProvider
 import me.evgem.domain.model.Message
 import me.evgem.domain.utils.NothingMessageHandler
+import me.evgem.domain.utils.PingMessageHandler
 import me.evgem.server.message.handler.CloseServerHandler
 import me.evgem.server.message.handler.DownloadServerHandler
 import me.evgem.server.message.handler.EchoServerHandler
@@ -28,5 +29,7 @@ class ServerMessageHandlerProvider : IMessageHandlerProvider {
         is Message.UploadResponse -> NothingMessageHandler
         is Message.Upload -> NothingMessageHandler
         is Message.UploadFinished -> NothingMessageHandler
+
+        is Message.Ping -> PingMessageHandler
     } as IMessageHandler<M>
 }

@@ -3,6 +3,7 @@ package me.evgem.client.message.handler
 import kotlinx.coroutines.suspendCancellableCoroutine
 import me.evgem.domain.model.Message
 import me.evgem.domain.utils.Log
+import me.evgem.domain.utils.humanReadableByteCountBin
 import me.evgem.domain.utils.messageHandler
 import me.evgem.domain.utils.safeResume
 import java.io.File
@@ -13,6 +14,7 @@ class DownloadClientHandler {
     private data class DownloadingInfo(
         val file: File,
         val length: Long,
+        val startedAt: Long = System.currentTimeMillis()
     )
 
     private val dir = File("clientDownloads/").apply {
@@ -20,13 +22,6 @@ class DownloadClientHandler {
     }
 
     private val downloadingFiles = HashMap<Long, DownloadingInfo>()
-
-    suspend fun isAbleDownload(filename: String): Boolean = suspendCancellableCoroutine { cont ->
-        val result = dir.listFiles()?.all {
-            it.name != filename
-        } ?: false
-        cont.safeResume(result)
-    }
 
     fun getDownloadResponseHandler() = messageHandler<Message.DownloadResponse> { message, _ ->
         Log.i("server download response $message")
@@ -44,11 +39,15 @@ class DownloadClientHandler {
             return@messageHandler
         }
         info.file.suspendWriteBytes(message.data)
-        Log.i("downloading id=${message.downloadId} ${info.file.length() * 100 / info.length}%")
+        Log.i("downloading ${info.file.length() * 100 / info.length}%")
     }
 
     fun getDownloadFinishedHandler() = messageHandler<Message.DownloadFinished> { message, _ ->
-        Log.i("download finished id=${message.downloadId}")
+        Log.i("download finished ${
+            downloadingFiles[message.downloadId]?.let {
+                humanReadableByteCountBin(it.length / (System.currentTimeMillis() - it.startedAt) * 1000)
+            }
+        } / s")
         downloadingFiles.remove(message.downloadId) ?: kotlin.run {
             Log.e("download finished but there is no downloading with id = ${message.downloadId}")
         }
@@ -56,9 +55,10 @@ class DownloadClientHandler {
 
     private suspend fun createFile(filename: String): File = suspendCancellableCoroutine { cont ->
         val file = File(dir, filename)
-        if (!file.exists()) {
-            file.createNewFile()
+        if (file.exists()) {
+            file.delete()
         }
+        file.createNewFile()
         cont.safeResume(file)
     }
 

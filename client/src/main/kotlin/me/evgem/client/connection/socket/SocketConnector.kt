@@ -5,6 +5,7 @@ import me.evgem.domain.connection.IConnection
 import me.evgem.domain.connection.socket.SocketConnection
 import me.evgem.domain.di.getMessageDecoder
 import me.evgem.domain.di.getMessageEncoder
+import me.evgem.domain.model.Message
 import me.evgem.domain.utils.Log
 import me.evgem.domain.utils.doSuspend
 import java.io.IOException
@@ -25,7 +26,9 @@ class SocketConnector : IConnector {
                 socket = socket,
                 messageDecoder = getMessageDecoder(),
                 messageEncoder = getMessageEncoder(),
-            )
+            ).also {
+                it.send(Message.Ping)
+            }
         } catch (e: IOException) {
             Log.i("cannot connect to $host:$port")
             null

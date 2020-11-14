@@ -8,6 +8,7 @@ import me.evgem.domain.model.IMessageHandler
 import me.evgem.domain.model.IMessageHandlerProvider
 import me.evgem.domain.model.Message
 import me.evgem.domain.utils.NothingMessageHandler
+import me.evgem.domain.utils.PingMessageHandler
 
 @Suppress("UNCHECKED_CAST")
 class ClientMessageHandlerProvider(
@@ -26,5 +27,6 @@ class ClientMessageHandlerProvider(
         is Message.UploadResponse -> NothingMessageHandler
         is Message.Upload -> NothingMessageHandler
         is Message.UploadFinished -> NothingMessageHandler
+        is Message.Ping -> PingMessageHandler
     } as IMessageHandler<M>
 }

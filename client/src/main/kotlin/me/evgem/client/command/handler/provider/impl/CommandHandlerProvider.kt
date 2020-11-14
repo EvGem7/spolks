@@ -13,7 +13,7 @@ class CommandHandlerProvider : ICommandHandlerProvider {
         is Command.Echo -> EchoCommandHandler
         is Command.Time -> TimeCommandHandler
         is Command.Close -> CloseCommandHandler
-        is Command.Download -> DownloadCommandHandler(getDownloadMessageHandler())
+        is Command.Download -> DownloadCommandHandler()
         is Command.Upload -> NothingCommandHandler
         is Command.Stop -> NothingCommandHandler
         is Command.Connect -> ConnectCommandHandler

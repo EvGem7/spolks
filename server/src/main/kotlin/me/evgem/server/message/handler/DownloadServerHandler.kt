@@ -13,8 +13,7 @@ import kotlin.math.min
 class DownloadServerHandler : IMessageHandler<Message.DownloadRequest> {
 
     companion object {
-                private const val BUFFER_SIZE = 1024 * 1024
-//        private const val BUFFER_SIZE = 2
+        private const val BUFFER_SIZE = 1024 * 1024
     }
 
     private val dir = File("serverFiles/").apply {
@@ -39,7 +38,9 @@ class DownloadServerHandler : IMessageHandler<Message.DownloadRequest> {
             )
             sendFile(id, file, connection)
             connection.send(Message.DownloadFinished(id))
+            Log.i("finish download ${message.filename}")
         } else {
+            Log.i("cannot find file ${message.filename}")
             connection.send(
                 Message.DownloadResponse(
                     filename = message.filename,
@@ -68,6 +69,7 @@ class DownloadServerHandler : IMessageHandler<Message.DownloadRequest> {
         for (i in 0L until partsCount) {
             val part = file.getPart(id)
             connection.send(Message.Download(id, part))
+            Log.i("downloading ${i * 100 / partsCount}%")
         }
 
         suspendCancellableCoroutine<Unit> {
