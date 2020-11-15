@@ -58,6 +58,7 @@ class SocketConnection(
         socket.doSuspend {
             close()
         }
+        scope.cancel()
     }
 
     private suspend fun tryReadBytes(): ByteArray? = socket.doSuspend {
