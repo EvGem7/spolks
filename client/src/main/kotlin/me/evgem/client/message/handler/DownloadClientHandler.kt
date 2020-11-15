@@ -14,10 +14,10 @@ class DownloadClientHandler {
     private data class DownloadingInfo(
         val file: File,
         val length: Long,
-        val startedAt: Long = System.currentTimeMillis()
+        val startedAt: Long = System.currentTimeMillis(),
     )
 
-    private val dir = File("clientDownloads/").apply {
+    private val dir = File("filesClient/").apply {
         mkdirs()
     }
 
@@ -36,7 +36,7 @@ class DownloadClientHandler {
                 length = message.length,
             )
         }
-        connection.send(Message.DownloadRequest(id, info.file.length()))
+        connection.send(Message.DownloadWait(id, info.file.length()))
     }
 
     fun getDownloadHandler() = messageHandler<Message.Download> { message, connection ->
@@ -51,7 +51,7 @@ class DownloadClientHandler {
             return@messageHandler
         }
         info.file.suspendWriteBytes(data)
-        connection.send(Message.DownloadRequest(message.downloadId, info.file.length()))
+        connection.send(Message.DownloadWait(message.downloadId, info.file.length()))
         Log.i("downloading id=${message.downloadId} ${info.file.length() * 100 / info.length}%")
     }
 

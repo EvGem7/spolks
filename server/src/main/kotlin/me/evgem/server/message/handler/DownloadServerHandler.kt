@@ -20,7 +20,7 @@ class DownloadServerHandler {
         val randomAccess: RandomAccessFile,
     )
 
-    private val dir = File("serverFiles/").apply {
+    private val dir = File("filesServer/").apply {
         mkdirs()
     }
 
@@ -53,7 +53,7 @@ class DownloadServerHandler {
         }
     }
 
-    fun getDownloadRequestHandler() = messageHandler<Message.DownloadRequest> { message, connection ->
+    fun getDownloadWaitHandler() = messageHandler<Message.DownloadWait> { message, connection ->
         val info = downloadingFiles[message.downloadId]
         if (info != null) {
             val part = info.getPart(message.downloadedLength)
@@ -76,13 +76,13 @@ class DownloadServerHandler {
         }
     }
 
-    private suspend fun findFileInfo(filename: String, canWrite: Boolean = false): FileInfo? =
+    private suspend fun findFileInfo(filename: String): FileInfo? =
         suspendCancellableCoroutine { cont ->
             val file = dir.listFiles()?.find {
                 it.name == filename
             }
             val info = file?.let {
-                FileInfo(it, RandomAccessFile(file, if (canWrite) "rw" else "r"))
+                FileInfo(it, RandomAccessFile(file, "r"))
             }
             cont.safeResume(info)
         }

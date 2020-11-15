@@ -24,7 +24,7 @@ class ServerMessageHandlerProvider : IMessageHandlerProvider {
         is Message.DownloadStartResponse -> NothingMessageHandler
         is Message.Download -> NothingMessageHandler
         is Message.DownloadFinished -> NothingMessageHandler
-        is Message.DownloadRequest -> downloadHandler.getDownloadRequestHandler()
+        is Message.DownloadWait -> downloadHandler.getDownloadWaitHandler()
 
         is Message.UploadRequest -> NothingMessageHandler
         is Message.UploadResponse -> NothingMessageHandler

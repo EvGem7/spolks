@@ -19,7 +19,7 @@ sealed class Message : Serializable {
         val downloadId: Long?,
     ) : Message()
 
-    data class DownloadRequest(
+    data class DownloadWait(
         val downloadId: Long,
         val downloadedLength: Long,
     ) : Message()
@@ -32,13 +32,21 @@ sealed class Message : Serializable {
     data class DownloadFinished(val downloadId: Long) : Message()
 
 
-    data class UploadRequest(val filename: String) : Message()
+    data class UploadStartRequest(val filename: String) : Message()
 
-    data class UploadResponse(val uploadId: Long?) : Message()
+    data class UploadStartResponse(
+        val filename: String,
+        val uploadId: Long?,
+    ) : Message()
+
+    data class UploadWait(
+        val uploadId: Long,
+        val uploadedLength: Long,
+    ) : Message()
 
     data class Upload(
         val uploadId: Long,
-        val data: ByteArray
+        val data: ByteArray,
     ) : Message()
 
     data class UploadFinished(val uploadId: Long) : Message()

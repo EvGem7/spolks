@@ -40,13 +40,15 @@ class Client(
     }
 
     private fun collectConnection(connection: IConnection) {
-        coroutineScope.launch {
-            connection.messages().collect {
-                coroutineScope.launch {
-                    messageHandlerProvider.provide(it).handle(it, connection)
+        with(coroutineScope) {
+            launch {
+                connection.messages().collect {
+                    launch {
+                        messageHandlerProvider.provide(it).handle(it, connection)
+                    }
                 }
+                clientState = clientState.copy(connection = null)
             }
-            clientState = clientState.copy(connection = null)
         }
     }
 

@@ -8,7 +8,7 @@ class ReDownloadCommandHandler(
     private val downloadClientHandler: DownloadClientHandler
 ) : MessageCommandHandler<Command.ReDownload>() {
 
-    override fun getMessage(command: Command.ReDownload): Message = Message.DownloadRequest(
+    override fun getMessage(command: Command.ReDownload): Message = Message.DownloadWait(
         downloadId = command.downloadId,
         downloadedLength = downloadClientHandler.getDownloadedLength(command.downloadId),
     )
