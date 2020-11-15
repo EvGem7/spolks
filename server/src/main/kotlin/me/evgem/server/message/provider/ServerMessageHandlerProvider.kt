@@ -20,10 +20,11 @@ class ServerMessageHandlerProvider : IMessageHandlerProvider {
         is Message.Time -> TimeServerHandler
         is Message.Close -> CloseServerHandler
 
-        is Message.DownloadRequest -> downloadHandler
-        is Message.DownloadResponse -> NothingMessageHandler
+        is Message.DownloadStartRequest -> downloadHandler.getDownloadStartRequestHandler()
+        is Message.DownloadStartResponse -> NothingMessageHandler
         is Message.Download -> NothingMessageHandler
         is Message.DownloadFinished -> NothingMessageHandler
+        is Message.DownloadRequest -> downloadHandler.getDownloadRequestHandler()
 
         is Message.UploadRequest -> NothingMessageHandler
         is Message.UploadResponse -> NothingMessageHandler

@@ -29,6 +29,7 @@ class SocketConnection(
     private var checkPingJob: Job? = null
 
     override fun messages(): Flow<Message> = flow<Message> {
+        socket.keepAlive = true
         var bytes = tryReadBytes()
         while (bytes != null) {
             delay(1L)
@@ -45,8 +46,11 @@ class SocketConnection(
 
     override suspend fun send(message: Message) {
         socket.doSuspend {
+            if (isClosed) {
+                return@doSuspend
+            }
             val arr = messageEncoder.encode(message)
-            socket.getOutputStream().write(arr)
+            getOutputStream().write(arr)
         }
     }
 

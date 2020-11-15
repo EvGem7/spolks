@@ -1,20 +1,24 @@
 package me.evgem.server.message.handler
 
 import kotlinx.coroutines.suspendCancellableCoroutine
-import me.evgem.domain.connection.IConnection
-import me.evgem.domain.model.IMessageHandler
 import me.evgem.domain.model.Message
 import me.evgem.domain.utils.Log
+import me.evgem.domain.utils.messageHandler
 import me.evgem.domain.utils.safeResume
 import java.io.File
-import java.io.InputStream
+import java.io.RandomAccessFile
 import kotlin.math.min
 
-class DownloadServerHandler : IMessageHandler<Message.DownloadRequest> {
+class DownloadServerHandler {
 
     companion object {
-        private const val BUFFER_SIZE = 1024 * 1024
+        private const val BUFFER_SIZE = 65536
     }
+
+    private data class FileInfo(
+        val file: File,
+        val randomAccess: RandomAccessFile,
+    )
 
     private val dir = File("serverFiles/").apply {
         mkdirs()
@@ -22,70 +26,73 @@ class DownloadServerHandler : IMessageHandler<Message.DownloadRequest> {
 
     private var downloadIdCounter = System.currentTimeMillis()
 
-    private val inputStreams = HashMap<Long, InputStream>()
+    private val downloadingFiles = HashMap<Long, FileInfo>()
 
-    override suspend fun handle(message: Message.DownloadRequest, connection: IConnection) {
+    fun getDownloadStartRequestHandler() = messageHandler<Message.DownloadStartRequest> { message, connection ->
         Log.i("download request for ${message.filename}")
-        val file = findFile(message.filename)
-        if (file != null) {
+        val info = findFileInfo(message.filename)
+        if (info != null) {
             val id = getDownloadId()
+            downloadingFiles[id] = info
             connection.send(
-                Message.DownloadResponse(
+                Message.DownloadStartResponse(
                     filename = message.filename,
-                    length = file.length(),
-                    downloadId = id
+                    length = info.file.length(),
+                    downloadId = id,
                 )
             )
-            sendFile(id, file, connection)
-            connection.send(Message.DownloadFinished(id))
-            Log.i("finish download ${message.filename}")
         } else {
             Log.i("cannot find file ${message.filename}")
             connection.send(
-                Message.DownloadResponse(
+                Message.DownloadStartResponse(
                     filename = message.filename,
                     length = 0L,
-                    downloadId = null
+                    downloadId = null,
                 )
             )
         }
     }
 
-    private suspend fun findFile(filename: String): File? = suspendCancellableCoroutine { cont ->
-        val file = dir.listFiles()?.find {
-            it.name == filename
-        }
-        cont.safeResume(file)
-    }
+    fun getDownloadRequestHandler() = messageHandler<Message.DownloadRequest> { message, connection ->
+        val info = downloadingFiles[message.downloadId]
+        if (info != null) {
+            val part = info.getPart(message.downloadedLength)
+            if (part.isNotEmpty()) {
+                connection.send(Message.Download(message.downloadId, part))
+            } else {
+                connection.send(Message.DownloadFinished(message.downloadId))
+                downloadingFiles.remove(message.downloadId)
+                Log.i("finish download ${info.file.name}")
+            }
 
-    private suspend fun sendFile(
-        id: Long,
-        file: File,
-        connection: IConnection,
-    ) {
-        val partsCount = file.length().let { length ->
-            length / BUFFER_SIZE + if (length % BUFFER_SIZE != 0L) 1 else 0
-        }
-        for (i in 0L until partsCount) {
-            val part = file.getPart(id)
-            connection.send(Message.Download(id, part))
-            Log.i("downloading ${i * 100 / partsCount}%")
-        }
-
-        suspendCancellableCoroutine<Unit> {
-            inputStreams.remove(id)?.close()
-            it.safeResume(Unit)
+        } else {
+            Log.i("cannot find downloadId ${message.downloadId}")
+            connection.send(
+                Message.Download(
+                    downloadId = message.downloadId,
+                    data = null,
+                )
+            )
         }
     }
 
-    private suspend fun File.getPart(
-        id: Long,
+    private suspend fun findFileInfo(filename: String, canWrite: Boolean = false): FileInfo? =
+        suspendCancellableCoroutine { cont ->
+            val file = dir.listFiles()?.find {
+                it.name == filename
+            }
+            val info = file?.let {
+                FileInfo(it, RandomAccessFile(file, if (canWrite) "rw" else "r"))
+            }
+            cont.safeResume(info)
+        }
+
+    private suspend fun FileInfo.getPart(
+        offset: Long,
     ): ByteArray = suspendCancellableCoroutine { cont ->
-        val stream = inputStreams.getOrPut(id) {
-            inputStream()
-        }
-        val buffer = ByteArray(min(BUFFER_SIZE, stream.available()))
-        stream.read(buffer)
+        randomAccess.seek(offset)
+        val buffer = ByteArray(min(BUFFER_SIZE.toLong(), file.length() - offset).toInt())
+        randomAccess.read(buffer)
         cont.safeResume(buffer)
     }
 

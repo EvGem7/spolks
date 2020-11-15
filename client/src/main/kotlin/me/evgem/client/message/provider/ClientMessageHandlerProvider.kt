@@ -19,8 +19,8 @@ class ClientMessageHandlerProvider(
         is Message.Echo -> EchoClientHandler
         is Message.Time -> TimeClientHandler
         is Message.Close -> CloseClientHandler
-        is Message.DownloadRequest -> NothingMessageHandler
-        is Message.DownloadResponse -> downloadHandler.getDownloadResponseHandler()
+        is Message.DownloadStartRequest -> NothingMessageHandler
+        is Message.DownloadStartResponse -> downloadHandler.getDownloadStartResponseHandler()
         is Message.Download -> downloadHandler.getDownloadHandler()
         is Message.DownloadFinished -> downloadHandler.getDownloadFinishedHandler()
         is Message.UploadRequest -> NothingMessageHandler
@@ -28,5 +28,6 @@ class ClientMessageHandlerProvider(
         is Message.Upload -> NothingMessageHandler
         is Message.UploadFinished -> NothingMessageHandler
         is Message.Ping -> PingMessageHandler
+        is Message.DownloadRequest -> NothingMessageHandler
     } as IMessageHandler<M>
 }

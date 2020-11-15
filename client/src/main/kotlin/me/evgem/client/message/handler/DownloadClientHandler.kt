@@ -23,23 +23,36 @@ class DownloadClientHandler {
 
     private val downloadingFiles = HashMap<Long, DownloadingInfo>()
 
-    fun getDownloadResponseHandler() = messageHandler<Message.DownloadResponse> { message, _ ->
-        Log.i("server download response $message")
-        val id = message.downloadId ?: return@messageHandler
-        val file = createFile(message.filename)
-        downloadingFiles[id] = DownloadingInfo(
-            file = file,
-            length = message.length,
-        )
+    fun getDownloadStartResponseHandler() = messageHandler<Message.DownloadStartResponse> { message, connection ->
+        Log.i("server download start response id = ${message.downloadId}")
+        val id = message.downloadId ?: kotlin.run {
+            Log.i("cannot download file ${message.filename}")
+            return@messageHandler
+        }
+        val info = downloadingFiles.getOrPut(id) {
+            val file = createFile(message.filename)
+            DownloadingInfo(
+                file = file,
+                length = message.length,
+            )
+        }
+        connection.send(Message.DownloadRequest(id, info.file.length()))
     }
 
-    fun getDownloadHandler() = messageHandler<Message.Download> { message, _ ->
+    fun getDownloadHandler() = messageHandler<Message.Download> { message, connection ->
         val info = downloadingFiles[message.downloadId] ?: kotlin.run {
             Log.e("got download message with unknown id ${message.downloadId}")
             return@messageHandler
         }
-        info.file.suspendWriteBytes(message.data)
-        Log.i("downloading ${info.file.length() * 100 / info.length}%")
+
+        val data = message.data
+        if (data == null) {
+            Log.i("error occurred while downloading, id = ${message.downloadId}")
+            return@messageHandler
+        }
+        info.file.suspendWriteBytes(data)
+        connection.send(Message.DownloadRequest(message.downloadId, info.file.length()))
+        Log.i("downloading id=${message.downloadId} ${info.file.length() * 100 / info.length}%")
     }
 
     fun getDownloadFinishedHandler() = messageHandler<Message.DownloadFinished> { message, _ ->
@@ -52,6 +65,8 @@ class DownloadClientHandler {
             Log.e("download finished but there is no downloading with id = ${message.downloadId}")
         }
     }
+
+    fun getDownloadedLength(downloadId: Long): Long = downloadingFiles[downloadId]?.file?.length() ?: 0L
 
     private suspend fun createFile(filename: String): File = suspendCancellableCoroutine { cont ->
         val file = File(dir, filename)

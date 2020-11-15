@@ -10,6 +10,8 @@ sealed class Command {
 
     data class Download(val filename: String) : Command()
 
+    data class ReDownload(val downloadId: Long) : Command()
+
     data class Upload(val filename: String) : Command()
 
     object Stop : Command()

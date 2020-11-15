@@ -5,6 +5,7 @@ enum class CommandType {
     Time,
     Close,
     Download,
+    ReDownload,
     Upload,
     Stop,
     Connect;

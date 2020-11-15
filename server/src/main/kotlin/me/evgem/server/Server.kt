@@ -30,7 +30,9 @@ class Server (
     private fun collectConnection(connection: IConnection) {
         coroutineScope.launch {
             connection.messages().collect {
-                messageHandlerProvider.provide(it).handle(it, connection)
+                coroutineScope.launch {
+                    messageHandlerProvider.provide(it).handle(it, connection)
+                }
             }
         }
     }

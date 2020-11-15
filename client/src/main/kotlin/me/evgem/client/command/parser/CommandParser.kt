@@ -18,6 +18,7 @@ object CommandParser {
                 CommandType.Time -> Command.Time
                 CommandType.Close -> Command.Close
                 CommandType.Download -> Command.Download(parts[1])
+                CommandType.ReDownload -> Command.ReDownload(parts[1].toLong())
                 CommandType.Upload -> Command.Upload(parts[1])
                 CommandType.Stop -> Command.Stop
                 CommandType.Connect -> Command.Connect(parts[1], parts[2].toInt())

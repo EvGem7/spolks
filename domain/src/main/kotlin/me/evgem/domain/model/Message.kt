@@ -11,17 +11,22 @@ sealed class Message : Serializable {
     object Close : Message()
 
 
-    data class DownloadRequest(val filename: String) : Message()
+    data class DownloadStartRequest(val filename: String) : Message()
 
-    data class DownloadResponse(
+    data class DownloadStartResponse(
         val filename: String,
         val length: Long,
         val downloadId: Long?,
     ) : Message()
 
+    data class DownloadRequest(
+        val downloadId: Long,
+        val downloadedLength: Long,
+    ) : Message()
+
     data class Download(
         val downloadId: Long,
-        val data: ByteArray
+        val data: ByteArray?,
     ) : Message()
 
     data class DownloadFinished(val downloadId: Long) : Message()
