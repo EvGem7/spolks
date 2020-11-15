@@ -1,6 +1,19 @@
 package me.evgem.domain.utils
 
-import kotlinx.coroutines.asCoroutineDispatcher
-import java.util.concurrent.Executors
+import kotlinx.coroutines.Dispatchers
+import java.security.Permission
 
-val singleThreadDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+val singleThreadDispatcher = run {
+    System.setSecurityManager(object : SecurityManager() {
+        override fun checkPermission(perm: Permission?) {
+
+        }
+
+        override fun checkPermission(perm: Permission?, context: Any?) {
+
+        }
+    })
+    System.setProperty("kotlinx.coroutines.scheduler", "off")
+    System.setProperty("kotlinx.coroutines.default.parallelism", "1")
+    Dispatchers.Default
+}
