@@ -4,6 +4,7 @@ import me.evgem.client.command.handler.ICommandHandler
 import me.evgem.client.command.handler.impl.*
 import me.evgem.client.command.handler.provider.ICommandHandlerProvider
 import me.evgem.client.di.getDownloadMessageHandler
+import me.evgem.client.di.getFilesDir
 import me.evgem.client.model.Command
 
 @Suppress("UNCHECKED_CAST")
@@ -13,10 +14,14 @@ class CommandHandlerProvider : ICommandHandlerProvider {
         is Command.Echo -> EchoCommandHandler
         is Command.Time -> TimeCommandHandler
         is Command.Close -> CloseCommandHandler
+
         is Command.Download -> DownloadCommandHandler
-        is Command.Upload -> NothingCommandHandler
+        is Command.ReDownload -> ReDownloadCommandHandler(getDownloadMessageHandler())
+
+        is Command.Upload -> UploadCommandHandler(getFilesDir())
+        is Command.ReUpload -> ReUploadCommandHandler
+
         is Command.Stop -> NothingCommandHandler
         is Command.Connect -> ConnectCommandHandler
-        is Command.ReDownload -> ReDownloadCommandHandler(getDownloadMessageHandler())
     } as ICommandHandler<C>
 }

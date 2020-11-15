@@ -7,6 +7,7 @@ enum class CommandType {
     Download,
     ReDownload,
     Upload,
+    ReUpload,
     Stop,
     Connect;
 

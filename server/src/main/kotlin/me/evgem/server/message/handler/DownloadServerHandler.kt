@@ -1,24 +1,17 @@
 package me.evgem.server.message.handler
 
-import kotlinx.coroutines.suspendCancellableCoroutine
 import me.evgem.domain.model.Message
+import me.evgem.domain.utils.FileInfo
 import me.evgem.domain.utils.Log
+import me.evgem.domain.utils.findFileInfo
 import me.evgem.domain.utils.messageHandler
-import me.evgem.domain.utils.safeResume
 import java.io.File
-import java.io.RandomAccessFile
-import kotlin.math.min
 
 class DownloadServerHandler {
 
     companion object {
         private const val BUFFER_SIZE = 65536
     }
-
-    private data class FileInfo(
-        val file: File,
-        val randomAccess: RandomAccessFile,
-    )
 
     private val dir = File("filesServer/").apply {
         mkdirs()
@@ -30,7 +23,7 @@ class DownloadServerHandler {
 
     fun getDownloadStartRequestHandler() = messageHandler<Message.DownloadStartRequest> { message, connection ->
         Log.i("download request for ${message.filename}")
-        val info = findFileInfo(message.filename)
+        val info = dir.findFileInfo(message.filename)
         if (info != null) {
             val id = getDownloadId()
             downloadingFiles[id] = info
@@ -56,7 +49,10 @@ class DownloadServerHandler {
     fun getDownloadWaitHandler() = messageHandler<Message.DownloadWait> { message, connection ->
         val info = downloadingFiles[message.downloadId]
         if (info != null) {
-            val part = info.getPart(message.downloadedLength)
+            val part = info.getPart(
+                offset = message.downloadedLength,
+                bufferSize = BUFFER_SIZE.toLong(),
+            )
             if (part.isNotEmpty()) {
                 connection.send(Message.Download(message.downloadId, part))
             } else {
@@ -74,26 +70,6 @@ class DownloadServerHandler {
                 )
             )
         }
-    }
-
-    private suspend fun findFileInfo(filename: String): FileInfo? =
-        suspendCancellableCoroutine { cont ->
-            val file = dir.listFiles()?.find {
-                it.name == filename
-            }
-            val info = file?.let {
-                FileInfo(it, RandomAccessFile(file, "r"))
-            }
-            cont.safeResume(info)
-        }
-
-    private suspend fun FileInfo.getPart(
-        offset: Long,
-    ): ByteArray = suspendCancellableCoroutine { cont ->
-        randomAccess.seek(offset)
-        val buffer = ByteArray(min(BUFFER_SIZE.toLong(), file.length() - offset).toInt())
-        randomAccess.read(buffer)
-        cont.safeResume(buffer)
     }
 
     private fun getDownloadId(): Long = downloadIdCounter++

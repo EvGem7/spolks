@@ -17,9 +17,13 @@ object CommandParser {
                 CommandType.Echo -> Command.Echo(cmd.drop("echo ".length))
                 CommandType.Time -> Command.Time
                 CommandType.Close -> Command.Close
+
                 CommandType.Download -> Command.Download(parts[1])
                 CommandType.ReDownload -> Command.ReDownload(parts[1].toLong())
+
                 CommandType.Upload -> Command.Upload(parts[1])
+                CommandType.ReUpload -> Command.ReUpload(parts[1].toLong())
+
                 CommandType.Stop -> Command.Stop
                 CommandType.Connect -> Command.Connect(parts[1], parts[2].toInt())
             }.also {

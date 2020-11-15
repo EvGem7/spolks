@@ -1,9 +1,6 @@
 package me.evgem.client.message.provider
 
-import me.evgem.client.message.handler.CloseClientHandler
-import me.evgem.client.message.handler.DownloadClientHandler
-import me.evgem.client.message.handler.EchoClientHandler
-import me.evgem.client.message.handler.TimeClientHandler
+import me.evgem.client.message.handler.*
 import me.evgem.domain.model.IMessageHandler
 import me.evgem.domain.model.IMessageHandlerProvider
 import me.evgem.domain.model.Message
@@ -12,7 +9,8 @@ import me.evgem.domain.utils.PingMessageHandler
 
 @Suppress("UNCHECKED_CAST")
 class ClientMessageHandlerProvider(
-    private val downloadHandler: DownloadClientHandler
+    private val downloadHandler: DownloadClientHandler,
+    private val uploadHandler: UploadClientHandler,
 ) : IMessageHandlerProvider {
 
     override fun <M : Message> provide(message: M): IMessageHandler<M> = when (message as Message) {
@@ -27,8 +25,8 @@ class ClientMessageHandlerProvider(
         is Message.DownloadFinished -> downloadHandler.getDownloadFinishedHandler()
 
         is Message.UploadStartRequest -> NothingMessageHandler
-        is Message.UploadStartResponse -> NothingMessageHandler
-        is Message.UploadWait -> NothingMessageHandler
+        is Message.UploadStartResponse -> uploadHandler.getUploadStartResponseHandler()
+        is Message.UploadWait -> uploadHandler.getUploadWaitHandler()
         is Message.Upload -> NothingMessageHandler
         is Message.UploadFinished -> NothingMessageHandler
 

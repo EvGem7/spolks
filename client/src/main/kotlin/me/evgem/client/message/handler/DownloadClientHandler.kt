@@ -9,7 +9,7 @@ import me.evgem.domain.utils.safeResume
 import java.io.File
 import java.io.FileOutputStream
 
-class DownloadClientHandler {
+class DownloadClientHandler(private val filesDir: File) {
 
     private data class DownloadingInfo(
         val file: File,
@@ -17,9 +17,6 @@ class DownloadClientHandler {
         val startedAt: Long = System.currentTimeMillis(),
     )
 
-    private val dir = File("filesClient/").apply {
-        mkdirs()
-    }
 
     private val downloadingFiles = HashMap<Long, DownloadingInfo>()
 
@@ -69,7 +66,7 @@ class DownloadClientHandler {
     fun getDownloadedLength(downloadId: Long): Long = downloadingFiles[downloadId]?.file?.length() ?: 0L
 
     private suspend fun createFile(filename: String): File = suspendCancellableCoroutine { cont ->
-        val file = File(dir, filename)
+        val file = File(filesDir, filename)
         if (file.exists()) {
             file.delete()
         }

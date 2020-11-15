@@ -1,6 +1,5 @@
 package me.evgem.domain.utils
 
-import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.ServerSocket
 import java.net.Socket
 
@@ -22,8 +21,4 @@ inline fun <T> ServerSocket.withTimeout(timeout: Int, block: (ServerSocket) -> T
     } finally {
         soTimeout = cur
     }
-}
-
-suspend inline fun <T> Socket.doSuspend(crossinline block: Socket.() -> T): T = suspendCancellableCoroutine { cont ->
-    cont.safeResume(block())
 }

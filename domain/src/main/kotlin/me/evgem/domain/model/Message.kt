@@ -46,7 +46,7 @@ sealed class Message : Serializable {
 
     data class Upload(
         val uploadId: Long,
-        val data: ByteArray,
+        val data: ByteArray?,
     ) : Message()
 
     data class UploadFinished(val uploadId: Long) : Message()
