@@ -91,7 +91,7 @@ class SocketConnection(
         if (it == null || it.isEmpty()) {
             startCheckPingTimer()
         } else {
-            stopStopTimer()
+            stopCheckPingTimer()
         }
     }
 
@@ -107,7 +107,7 @@ class SocketConnection(
         }
     }
 
-    private fun stopStopTimer() {
+    private fun stopCheckPingTimer() {
         checkPingJob?.cancel()
         checkPingJob = null
     }
