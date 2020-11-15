@@ -63,5 +63,5 @@ buildSrcTmp/
 distTmp/
 outTmp/
 
-clientDownloads/
-serverFiles/
+filesClient/
+filesServer/

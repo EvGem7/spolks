@@ -5,15 +5,14 @@ import me.evgem.domain.model.IMessageHandlerProvider
 import me.evgem.domain.model.Message
 import me.evgem.domain.utils.NothingMessageHandler
 import me.evgem.domain.utils.PingMessageHandler
-import me.evgem.server.message.handler.CloseServerHandler
-import me.evgem.server.message.handler.DownloadServerHandler
-import me.evgem.server.message.handler.EchoServerHandler
-import me.evgem.server.message.handler.TimeServerHandler
+import me.evgem.server.message.handler.*
 
 @Suppress("UNCHECKED_CAST")
-class ServerMessageHandlerProvider : IMessageHandlerProvider {
+class ServerMessageHandlerProvider(
+    private val downloadHandler:DownloadServerHandler,
+    private val uploadHandler: UploadServerHandler,
+) : IMessageHandlerProvider {
 
-    private val downloadHandler = DownloadServerHandler()
 
     override fun <M : Message> provide(message: M): IMessageHandler<M> = when (message as Message) {
         is Message.Echo -> EchoServerHandler
@@ -26,11 +25,11 @@ class ServerMessageHandlerProvider : IMessageHandlerProvider {
         is Message.DownloadFinished -> NothingMessageHandler
         is Message.DownloadWait -> downloadHandler.getDownloadWaitHandler()
 
-        is Message.UploadStartRequest -> NothingMessageHandler
+        is Message.UploadStartRequest -> uploadHandler.getUploadStartRequestHandler()
         is Message.UploadStartResponse -> NothingMessageHandler
-        is Message.UploadWait -> NothingMessageHandler
-        is Message.Upload -> NothingMessageHandler
-        is Message.UploadFinished -> NothingMessageHandler
+        is Message.UploadWait -> uploadHandler.getUploadWaitHandler()
+        is Message.Upload -> uploadHandler.getUploadHandler()
+        is Message.UploadFinished -> uploadHandler.getUploadFinishedHandler()
 
         is Message.Ping -> PingMessageHandler
     } as IMessageHandler<M>

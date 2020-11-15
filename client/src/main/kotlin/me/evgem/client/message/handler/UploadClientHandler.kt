@@ -13,6 +13,7 @@ class UploadClientHandler(private val filesDir: File) {
     private val uploadingFiles = HashMap<Long, FileInfo>()
 
     fun getUploadStartResponseHandler() = messageHandler<Message.UploadStartResponse> { message, _ ->
+        Log.i("upload response from server $message")
         val id = message.uploadId ?: kotlin.run {
             Log.i("cannot upload file ${message.filename}")
             return@messageHandler
@@ -38,7 +39,7 @@ class UploadClientHandler(private val filesDir: File) {
                     )
                 )
                 val uploaded = message.uploadedLength + part.size
-                Log.i("uploading id = ${message.uploadId} ${uploaded * 100 / info.file.length()}")
+                Log.i("uploading id = ${message.uploadId} ${uploaded * 100 / info.file.length()}%")
             } else {
                 connection.send(Message.UploadFinished(message.uploadId))
                 val speed = humanReadableByteCountBin(

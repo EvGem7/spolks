@@ -7,14 +7,10 @@ import me.evgem.domain.utils.findFileInfo
 import me.evgem.domain.utils.messageHandler
 import java.io.File
 
-class DownloadServerHandler {
+class DownloadServerHandler(private val filesDir: File) {
 
     companion object {
         private const val BUFFER_SIZE = 65536
-    }
-
-    private val dir = File("filesServer/").apply {
-        mkdirs()
     }
 
     private var downloadIdCounter = System.currentTimeMillis()
@@ -23,7 +19,7 @@ class DownloadServerHandler {
 
     fun getDownloadStartRequestHandler() = messageHandler<Message.DownloadStartRequest> { message, connection ->
         Log.i("download request for ${message.filename}")
-        val info = dir.findFileInfo(message.filename)
+        val info = filesDir.findFileInfo(message.filename)
         if (info != null) {
             val id = getDownloadId()
             downloadingFiles[id] = info
