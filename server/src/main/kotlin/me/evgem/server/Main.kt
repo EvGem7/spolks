@@ -3,13 +3,21 @@
 package me.evgem.server
 
 import me.evgem.domain.utils.Log
+import me.evgem.domain.utils.forceUseUdp
 import me.evgem.server.di.getConnectionListener
 import me.evgem.server.di.getMessageHandlerProvider
 import java.util.*
 
-fun main() {
+fun main(args: Array<String>) {
+    val isTcp = args.getOrElse(0) {
+        if (forceUseUdp) "udp" else "tcp"
+    }.let {
+        Log.i("using $it")
+        it == "tcp"
+    }
+
     val server = Server(
-        getConnectionListener(),
+        getConnectionListener(isTcp),
         getMessageHandlerProvider(),
     )
     server.start()

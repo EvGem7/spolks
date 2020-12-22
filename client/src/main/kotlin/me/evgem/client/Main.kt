@@ -8,14 +8,22 @@ import me.evgem.client.di.getConnector
 import me.evgem.client.di.getMessageHandlerProvider
 import me.evgem.client.model.Command
 import me.evgem.domain.utils.Log
+import me.evgem.domain.utils.forceUseUdp
 import java.util.*
 
-fun main() {
+fun main(args: Array<String>) {
     val scanner = Scanner(System.`in`)
+
+    val isTcp = args.getOrElse(0) {
+        if (forceUseUdp) "udp" else "tcp"
+    }.let {
+        Log.i("using $it")
+        it == "tcp"
+    }
 
     val client = Client(
         getCommandHandlerProvider(),
-        getConnector(),
+        getConnector(isTcp),
         getMessageHandlerProvider()
     )
     client.start()
