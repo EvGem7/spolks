@@ -67,6 +67,9 @@ class SocketConnection(
             if (input.available() > 0) {
                 input.readNBytes(input.available())
             } else {
+                byteArrayOf()
+            }
+            /* else {
                 try {
                     val byte = withTimeout(1) {
                         input.read()
@@ -83,7 +86,7 @@ class SocketConnection(
                 } catch (e: SocketTimeoutException) {
                     byteArrayOf()
                 }
-            }
+            }*/
         } catch (e: IOException) {
             null
         }
