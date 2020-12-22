@@ -1,4 +1,4 @@
-package me.evgem.domain.connection.socket
+package me.evgem.domain.connection.tcp
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -9,12 +9,10 @@ import me.evgem.domain.model.Message
 import me.evgem.domain.utils.Log
 import me.evgem.domain.utils.doSuspend
 import me.evgem.domain.utils.singleThreadDispatcher
-import me.evgem.domain.utils.withTimeout
 import java.io.IOException
 import java.net.Socket
-import java.net.SocketTimeoutException
 
-class SocketConnection(
+class TcpConnection(
     private val socket: Socket,
     private val messageDecoder: IMessageDecoder,
     private val messageEncoder: IMessageEncoder,

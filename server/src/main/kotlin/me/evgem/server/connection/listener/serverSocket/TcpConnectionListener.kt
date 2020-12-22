@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.suspendCancellableCoroutine
 import me.evgem.domain.connection.IConnection
-import me.evgem.domain.connection.socket.SocketConnection
+import me.evgem.domain.connection.tcp.TcpConnection
 import me.evgem.domain.di.getMessageDecoder
 import me.evgem.domain.di.getMessageEncoder
 import me.evgem.domain.model.Message
@@ -20,7 +20,7 @@ import java.net.Socket
 import java.net.SocketTimeoutException
 
 @ExperimentalCoroutinesApi
-class ServerSocketConnectionListener : IConnectionListener {
+class TcpConnectionListener : IConnectionListener {
 
     companion object {
         private const val PORT = 9999
@@ -34,7 +34,7 @@ class ServerSocketConnectionListener : IConnectionListener {
             emit(socket)
         }
     }.map { socket ->
-        SocketConnection(
+        TcpConnection(
             socket,
             getMessageDecoder(),
             getMessageEncoder(),

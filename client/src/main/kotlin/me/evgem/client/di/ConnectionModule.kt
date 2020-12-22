@@ -1,6 +1,6 @@
 package me.evgem.client.di
 
 import me.evgem.client.connection.IConnector
-import me.evgem.client.connection.socket.SocketConnector
+import me.evgem.client.connection.socket.TcpConnector
 
-fun getConnector(): IConnector = SocketConnector()
+fun getConnector(): IConnector = TcpConnector()

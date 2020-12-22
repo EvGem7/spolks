@@ -2,7 +2,7 @@ package me.evgem.client.connection.socket
 
 import me.evgem.client.connection.IConnector
 import me.evgem.domain.connection.IConnection
-import me.evgem.domain.connection.socket.SocketConnection
+import me.evgem.domain.connection.tcp.TcpConnection
 import me.evgem.domain.di.getMessageDecoder
 import me.evgem.domain.di.getMessageEncoder
 import me.evgem.domain.model.Message
@@ -12,7 +12,7 @@ import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
 
-class SocketConnector : IConnector {
+class TcpConnector : IConnector {
 
     override suspend fun connect(host: String, port: Int): IConnection? {
         return try {
@@ -22,7 +22,7 @@ class SocketConnector : IConnector {
                 this
             }
             Log.i("connected $host:$port")
-            SocketConnection(
+            TcpConnection(
                 socket = socket,
                 messageDecoder = getMessageDecoder(),
                 messageEncoder = getMessageEncoder(),
