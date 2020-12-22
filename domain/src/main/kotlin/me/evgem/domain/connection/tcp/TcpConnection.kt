@@ -9,8 +9,10 @@ import me.evgem.domain.model.Message
 import me.evgem.domain.utils.Log
 import me.evgem.domain.utils.doSuspend
 import me.evgem.domain.utils.singleThreadDispatcher
+import me.evgem.domain.utils.withTimeout
 import java.io.IOException
 import java.net.Socket
+import java.net.SocketTimeoutException
 
 class TcpConnection(
     private val socket: Socket,
@@ -28,13 +30,18 @@ class TcpConnection(
 
     override fun messages(): Flow<Message> = flow<Message> {
         socket.keepAlive = true
-        var bytes = tryReadBytes()
+        var bytes: ByteArray? = byteArrayOf()
         while (bytes != null) {
+            do {
+                bytes = tryReadBytes()
+                if (bytes == null) {
+                    continue
+                }
+                messageDecoder.decode(bytes)?.let {
+                    emit(it)
+                }
+            } while (bytes != null && bytes.isNotEmpty())
             delay(1L)
-            messageDecoder.decode(bytes)?.let {
-                emit(it)
-            }
-            bytes = tryReadBytes()
         }
         socket.doSuspend {
             close()
@@ -62,29 +69,22 @@ class TcpConnection(
     private suspend fun tryReadBytes(): ByteArray? = socket.doSuspend {
         try {
             val input = getInputStream()
-            if (input.available() > 0) {
-                input.readNBytes(input.available())
-            } else {
+            try {
+                val byte = withTimeout(1) {
+                    input.read()
+                }
+                if (byte != -1) {
+                    if (input.available() > 0) {
+                        byteArrayOf(byte.toByte()) + input.readNBytes(input.available())
+                    } else {
+                        byteArrayOf(byte.toByte())
+                    }
+                } else {
+                    null
+                }
+            } catch (e: SocketTimeoutException) {
                 byteArrayOf()
             }
-            /* else {
-                try {
-                    val byte = withTimeout(1) {
-                        input.read()
-                    }
-                    if (byte != -1) {
-                        if (input.available() > 0) {
-                            byteArrayOf(byte.toByte()) + input.readNBytes(input.available())
-                        } else {
-                            byteArrayOf(byte.toByte())
-                        }
-                    } else {
-                        null
-                    }
-                } catch (e: SocketTimeoutException) {
-                    byteArrayOf()
-                }
-            }*/
         } catch (e: IOException) {
             null
         }

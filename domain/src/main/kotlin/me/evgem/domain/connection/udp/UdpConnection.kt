@@ -25,7 +25,7 @@ class UdpConnection(
 ) : IConnection {
 
     companion object {
-        private const val DATAGRAM_SIZE = 1024
+        private const val DATAGRAM_SIZE = 10_000
         private const val DATA_SIZE_FIELD_LENGTH = 2
         private const val DATA_SIZE_FIELD_INDEX = 1
         private const val DATA_FIELD_OFFSET =  DATA_SIZE_FIELD_LENGTH + DATA_SIZE_FIELD_INDEX
@@ -37,13 +37,18 @@ class UdpConnection(
     private var sendIndex: Byte = 0
 
     override fun messages(): Flow<Message> = flow {
-        var bytes = tryReadBytes()
+        var bytes: ByteArray? = byteArrayOf()
         while (bytes != null) {
+            do {
+                bytes = tryReadBytes()
+                if (bytes == null) {
+                    continue
+                }
+                messageDecoder.decode(bytes)?.let {
+                    emit(it)
+                }
+            } while (bytes != null && bytes.isNotEmpty())
             delay(1L)
-            messageDecoder.decode(bytes)?.let {
-                emit(it)
-            }
-            bytes = tryReadBytes()
         }
         socket.doSuspend {
             close()
@@ -114,7 +119,7 @@ class UdpConnection(
 
     private fun getData(datagramData: ByteArray, dataSize: Int): ByteArray {
         val from = DATA_FIELD_OFFSET
-        val to = min(from + dataSize, datagramData.size)
+        val to = from + dataSize
         return datagramData.copyOfRange(from, to)
     }
 
