@@ -1,4 +1,4 @@
-package me.evgem.server.connection.listener.serverSocket
+package me.evgem.server.connection.listener.impl
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -38,9 +38,7 @@ class TcpConnectionListener : IConnectionListener {
             socket,
             getMessageDecoder(),
             getMessageEncoder(),
-        ).also {
-            it.send(Message.Ping)
-        }
+        )
     }
 
     private suspend fun getServerSocket(): ServerSocket = suspendCancellableCoroutine { cont ->

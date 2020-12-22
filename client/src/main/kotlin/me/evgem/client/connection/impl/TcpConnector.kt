@@ -1,4 +1,4 @@
-package me.evgem.client.connection.socket
+package me.evgem.client.connection.impl
 
 import me.evgem.client.connection.IConnector
 import me.evgem.domain.connection.IConnection
