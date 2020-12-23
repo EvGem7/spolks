@@ -20,17 +20,15 @@ class ServerMessageHandlerProvider(
         is Message.Close -> CloseServerHandler
 
         is Message.DownloadStartRequest -> downloadHandler.getDownloadStartRequestHandler()
-        is Message.DownloadStartResponse -> NothingMessageHandler
-        is Message.Download -> NothingMessageHandler
-        is Message.DownloadFinished -> NothingMessageHandler
         is Message.DownloadWait -> downloadHandler.getDownloadWaitHandler()
 
         is Message.UploadStartRequest -> uploadHandler.getUploadStartRequestHandler()
-        is Message.UploadStartResponse -> NothingMessageHandler
         is Message.UploadWait -> uploadHandler.getUploadWaitHandler()
         is Message.Upload -> uploadHandler.getUploadHandler()
         is Message.UploadFinished -> uploadHandler.getUploadFinishedHandler()
 
         is Message.Ping -> PingMessageHandler
+
+        else -> NothingMessageHandler
     } as IMessageHandler<M>
 }

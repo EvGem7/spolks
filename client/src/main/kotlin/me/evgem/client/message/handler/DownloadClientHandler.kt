@@ -48,7 +48,7 @@ class DownloadClientHandler(private val filesDir: File) {
             return@messageHandler
         }
         info.file.suspendWriteBytes(data)
-        connection.send(Message.DownloadWait(message.downloadId, info.file.length()))
+//        connection.send(Message.DownloadWait(message.downloadId, info.file.length()))
         Log.i("downloading id=${message.downloadId} ${info.file.length() * 100 / info.length}%")
     }
 

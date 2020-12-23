@@ -18,18 +18,15 @@ class ClientMessageHandlerProvider(
         is Message.Time -> TimeClientHandler
         is Message.Close -> CloseClientHandler
 
-        is Message.DownloadStartRequest -> NothingMessageHandler
         is Message.DownloadStartResponse -> downloadHandler.getDownloadStartResponseHandler()
-        is Message.DownloadWait -> NothingMessageHandler
         is Message.Download -> downloadHandler.getDownloadHandler()
         is Message.DownloadFinished -> downloadHandler.getDownloadFinishedHandler()
 
-        is Message.UploadStartRequest -> NothingMessageHandler
         is Message.UploadStartResponse -> uploadHandler.getUploadStartResponseHandler()
         is Message.UploadWait -> uploadHandler.getUploadWaitHandler()
-        is Message.Upload -> NothingMessageHandler
-        is Message.UploadFinished -> NothingMessageHandler
 
         is Message.Ping -> PingMessageHandler
+
+        else -> NothingMessageHandler
     } as IMessageHandler<M>
 }

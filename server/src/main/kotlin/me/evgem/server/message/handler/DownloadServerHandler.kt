@@ -10,7 +10,7 @@ import java.io.File
 class DownloadServerHandler(private val filesDir: File) {
 
     companion object {
-        private const val BUFFER_SIZE = 60_000
+        private const val BUFFER_SIZE = 1_000_000L
     }
 
     private var downloadIdCounter = System.currentTimeMillis()
@@ -45,18 +45,25 @@ class DownloadServerHandler(private val filesDir: File) {
     fun getDownloadWaitHandler() = messageHandler<Message.DownloadWait> { message, connection ->
         val info = downloadingFiles[message.downloadId]
         if (info != null) {
-            val part = info.getPart(
-                offset = message.downloadedLength,
-                bufferSize = BUFFER_SIZE.toLong(),
-            )
-            if (part.isNotEmpty()) {
-                connection.send(Message.Download(message.downloadId, part))
-            } else {
-                connection.send(Message.DownloadFinished(message.downloadId))
-                downloadingFiles.remove(message.downloadId)
-                Log.i("finish download ${info.file.name}")
+            for (i in message.downloadedLength until info.file.length() step BUFFER_SIZE) {
+                val part = info.getPart(
+                    offset = i,
+                    bufferSize = BUFFER_SIZE,
+                )
+                if (part.isNotEmpty()) {
+                    try {
+                        connection.send(Message.Download(message.downloadId, part))
+                    } catch (e: Exception) {
+                        Log.e(e)
+                        return@messageHandler
+                    }
+                } else {
+                    break
+                }
             }
-
+            connection.send(Message.DownloadFinished(message.downloadId))
+            downloadingFiles.remove(message.downloadId)
+            Log.i("finish download ${info.file.name}")
         } else {
             Log.i("cannot find downloadId ${message.downloadId}")
             connection.send(

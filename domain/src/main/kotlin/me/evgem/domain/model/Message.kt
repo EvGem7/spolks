@@ -53,4 +53,6 @@ sealed class Message : Serializable {
 
 
     object Ping : Message()
+
+    object ReadyToReceive : Message()
 }
