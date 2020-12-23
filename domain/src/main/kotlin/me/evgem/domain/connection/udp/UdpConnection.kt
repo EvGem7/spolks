@@ -24,18 +24,6 @@ class UdpConnection(
     private val messageDecoder: IMessageDecoder,
 ) : IConnection {
 
-    companion object {
-        private const val DATAGRAM_SIZE = 10_000
-        private const val DATA_SIZE_FIELD_LENGTH = 2
-        private const val DATA_SIZE_FIELD_INDEX = 1
-        private const val DATA_FIELD_OFFSET =  DATA_SIZE_FIELD_LENGTH + DATA_SIZE_FIELD_INDEX
-        private const val DATA_FIELD_LENGTH = DATAGRAM_SIZE - DATA_FIELD_OFFSET
-    }
-
-    private val receiveBuffer = ByteArray(DATAGRAM_SIZE)
-
-    private var sendIndex: Byte = 0
-
     override fun messages(): Flow<Message> = flow {
         var bytes: ByteArray? = byteArrayOf()
         while (bytes != null) {
@@ -45,6 +33,7 @@ class UdpConnection(
                     continue
                 }
                 messageDecoder.decode(bytes)?.let {
+                    Log.d("receive ${it::class.java.simpleName}")
                     emit(it)
                 }
             } while (bytes != null && bytes.isNotEmpty())
@@ -57,16 +46,19 @@ class UdpConnection(
     }
 
     private suspend fun tryReadBytes(): ByteArray? {
-        val packet = DatagramPacket(receiveBuffer, DATAGRAM_SIZE)
         return socket.doSuspend {
             try {
-                withTimeout(1) {
-                    receive(packet)
-                    val data = packet.data
-                    val size = getDataSize(data)
-                    val index = getIndex(data)
-                    getData(data, size)
+                val size = withTimeout(1) {
+                    val sizeDatagram = DatagramPacket(ByteArray(2), 2)
+                    receive(sizeDatagram)
+                    sizeDatagram.data.let {
+                        ((it[0].toInt() and 0xFF) shl 8) +
+                                (it[1].toInt() and 0xFF)
+                    }
                 }
+                val contentDatagram = DatagramPacket(ByteArray(size), size)
+                receive(contentDatagram)
+                contentDatagram.data
             } catch (e: SocketTimeoutException) {
                 byteArrayOf()
             } catch (e: IOException) {
@@ -77,26 +69,19 @@ class UdpConnection(
     }
 
     override suspend fun send(message: Message) {
+        Log.d("send ${message::class.java.simpleName}")
         val encoded = messageEncoder.encode(message)
-        val datagrams = ArrayList<DatagramPacket>()
-        for (i in encoded.indices step DATA_FIELD_LENGTH) {
-            val dataSize = min(DATA_FIELD_LENGTH, encoded.size - i)
-            val buffer = ByteArray(DATAGRAM_SIZE)
-            buffer[0] = (dataSize shr 8).toByte()
-            buffer[1] = dataSize.toByte()
-            buffer[2] = sendIndex++
-            encoded.copyInto(
-                destination = buffer,
-                destinationOffset = DATA_FIELD_OFFSET,
-                startIndex = i,
-                endIndex = i + dataSize,
-            )
-            datagrams += DatagramPacket(buffer, DATAGRAM_SIZE, address)
+        val size = kotlin.run {
+            val s = encoded.size
+            val h = (s shr 8).toByte()
+            val l = s.toByte()
+            byteArrayOf(h, l)
         }
+        val sizeDatagram = DatagramPacket(size, size.size, address)
+        val contentDatagram = DatagramPacket(encoded, encoded.size, address)
         socket.doSuspend {
-            datagrams.forEach { packet ->
-                send(packet)
-            }
+            send(sizeDatagram)
+            send(contentDatagram)
         }
     }
 
@@ -104,23 +89,6 @@ class UdpConnection(
         socket.doSuspend {
             close()
         }
-    }
-
-    private fun getIndex(data: ByteArray): Byte {
-        return data[2]
-    }
-
-    private fun getDataSize(datagramData: ByteArray): Int {
-        var result = 0
-        result += (datagramData[0].toInt() and 0xFF) shl 8
-        result += datagramData[1].toInt() and 0xFF
-        return result
-    }
-
-    private fun getData(datagramData: ByteArray, dataSize: Int): ByteArray {
-        val from = DATA_FIELD_OFFSET
-        val to = from + dataSize
-        return datagramData.copyOfRange(from, to)
     }
 
     private val socket: DatagramSocket get() = wrapper.socket
