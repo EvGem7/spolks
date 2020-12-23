@@ -16,6 +16,7 @@ import me.evgem.domain.utils.Log
 import me.evgem.domain.utils.doSuspend
 import me.evgem.domain.utils.withTimeout
 import java.io.IOException
+import java.lang.Exception
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.SocketAddress
@@ -56,7 +57,12 @@ class UdpConnection(
         while (bytes != null) {
             var shouldSendReady = false
             do {
-                bytes = tryReadBytes()
+                bytes = try {
+                    tryReadBytes()
+                } catch (e: PacketDropException) {
+                    send(Message.Noop)
+                    break
+                }
                 if (bytes == null || bytes.isEmpty()) {
                     break
                 }
@@ -132,7 +138,9 @@ class UdpConnection(
                         index
                     } else {
                         if (receiveIndex + 1 != index) {
-                            return@doSuspend null
+                            Log.e("some packets dropped! prev=$receiveIndex cur=$index")
+                            reset()
+                            throw PacketDropException()
                         }
                         index
                     }
@@ -143,10 +151,18 @@ class UdpConnection(
             } catch (e: SocketTimeoutException) {
                 byteArrayOf()
             } catch (e: IOException) {
-                Log.d(e.stackTraceToString())
+                Log.e(e)
                 null
             }
         }
+    }
+
+    private fun reset() {
+        messageDecoder.clear()
+        sendIndex = 0
+        receiveIndex = 0
+        firstReceived = false
+        sendCounter = 0
     }
 
     private val socket: DatagramSocket get() = wrapper.socket

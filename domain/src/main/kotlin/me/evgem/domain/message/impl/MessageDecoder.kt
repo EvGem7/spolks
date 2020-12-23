@@ -37,4 +37,8 @@ class MessageDecoder : IMessageDecoder {
             inputBytes.close()
         }
     }
+
+    override fun clear() {
+        byteArrayOutputStream.reset()
+    }
 }
