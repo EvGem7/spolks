@@ -54,7 +54,6 @@ class DownloadServerHandler(private val filesDir: File) {
                     try {
                         connection.send(Message.Download(message.downloadId, part))
                     } catch (e: Exception) {
-                        Log.e(e)
                         return@messageHandler
                     }
                 } else {
