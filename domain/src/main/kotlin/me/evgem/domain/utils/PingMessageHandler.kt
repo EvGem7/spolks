@@ -7,7 +7,7 @@ import me.evgem.domain.model.Message
 
 object PingMessageHandler : IMessageHandler<Message.Ping> {
 
-    private const val PING_DELAY = 1_000L
+    private const val PING_DELAY = 750L
 
     override suspend fun handle(message: Message.Ping, connection: IConnection) {
         delay(PING_DELAY)

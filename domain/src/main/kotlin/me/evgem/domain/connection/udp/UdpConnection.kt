@@ -1,22 +1,16 @@
 package me.evgem.domain.connection.udp
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import me.evgem.domain.connection.IConnection
 import me.evgem.domain.message.IMessageDecoder
 import me.evgem.domain.message.IMessageEncoder
 import me.evgem.domain.model.Message
-import me.evgem.domain.utils.DatagramSocketWrapper
-import me.evgem.domain.utils.Log
-import me.evgem.domain.utils.doSuspend
-import me.evgem.domain.utils.withTimeout
+import me.evgem.domain.utils.*
 import java.io.IOException
-import java.lang.Exception
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.SocketAddress
@@ -36,7 +30,9 @@ class UdpConnection(
         private const val SEND_TIMEOUT = 2000L
 
         private const val DATAGRAM_SIZE = 60_000
-        private const val DATA_FIELD_LENGTH = DATAGRAM_SIZE - Int.SIZE_BYTES - Short.SIZE_BYTES
+        private const val DATA_FIELD_LENGTH = DATAGRAM_SIZE - 2 * Int.SIZE_BYTES - Short.SIZE_BYTES
+
+        private const val CONNECTION_LOST_TIMEOUT = 2000L
     }
 
     private var sendCounter = 0L
@@ -47,12 +43,18 @@ class UdpConnection(
 
     private val receiveWaitChannel = BroadcastChannel<Unit>(1)
 
+    private val scope = CoroutineScope(singleThreadDispatcher)
+
+    private var checkPingJob: Job? = null
+
+    private val mutex = Mutex()
+
     init {
         wrapper.socket.receiveBufferSize = BUFFER_SIZE
         wrapper.socket.sendBufferSize = BUFFER_SIZE
     }
 
-    override fun messages(): Flow<Message> = flow {
+    override fun messages(): Flow<Message> = flow<Message> {
         var bytes: ByteArray? = byteArrayOf()
         while (bytes != null) {
             var shouldSendReady = false
@@ -60,8 +62,7 @@ class UdpConnection(
                 bytes = try {
                     tryReadBytes()
                 } catch (e: PacketDropException) {
-                    send(Message.Noop)
-                    break
+                    null
                 }
                 if (bytes == null || bytes.isEmpty()) {
                     break
@@ -89,29 +90,39 @@ class UdpConnection(
         }
         Log.i("socket $address is closed")
     }
+        .onCompletion {
+            Log.i("term $sendCounter")
+
+        }
 
     override suspend fun send(message: Message) {
-        Log.d("send msg ${message::class.java.simpleName}")
-        withTimeout(SEND_TIMEOUT) {
-            val encoded = messageEncoder.encode(message)
-            val datagrams = ArrayList<DatagramPacket>()
-            for (i in encoded.indices step DATA_FIELD_LENGTH) {
-                val dataSize = min(DATA_FIELD_LENGTH, encoded.size - i)
-                val buffer = ByteBuffer.allocate(DATAGRAM_SIZE)
-                buffer.putShort(dataSize.toShort())
-                buffer.putInt(sendIndex++)
-                buffer.put(encoded, i, dataSize)
-                datagrams += DatagramPacket(buffer.array(), DATAGRAM_SIZE, address)
+        mutex.withLock {
+            if (socket.isClosed) {
+                return
             }
-            datagrams.forEach { packet ->
-                if (sendCounter > SEND_THRESHOLD) {
-                    receiveWaitChannel.asFlow().first()
+            Log.d("send msg ${sendIndex + 1} $sendCounter ${message::class.java.simpleName}")
+            withTimeout(SEND_TIMEOUT) {
+                val encoded = messageEncoder.encode(message)
+                val datagrams = ArrayList<DatagramPacket>()
+                for (i in encoded.indices step DATA_FIELD_LENGTH) {
+                    val dataSize = min(DATA_FIELD_LENGTH, encoded.size - i)
+                    val buffer = ByteBuffer.allocate(DATAGRAM_SIZE)
+                    buffer.putShort(dataSize.toShort())
+                    buffer.putInt(sendIndex++)
+                    buffer.put(encoded, i, dataSize)
+                    datagrams += DatagramPacket(buffer.array(), DATAGRAM_SIZE, address)
                 }
-                socket.doSuspend {
-                    send(packet)
-                }
-                if (message !is Message.ReadyToReceive) {
-                    sendCounter += DATAGRAM_SIZE
+                datagrams.forEach { packet ->
+                    if (sendCounter > SEND_THRESHOLD) {
+                        receiveWaitChannel.asFlow().first()
+                    }
+                    delay(10)
+                    socket.doSuspend {
+                        send(packet)
+                    }
+                    if (message !is Message.ReadyToReceive) {
+                        sendCounter += DATAGRAM_SIZE
+                    }
                 }
             }
         }
@@ -139,7 +150,6 @@ class UdpConnection(
                     } else {
                         if (receiveIndex + 1 != index) {
                             Log.e("some packets dropped! prev=$receiveIndex cur=$index")
-                            reset()
                             throw PacketDropException()
                         }
                         index
@@ -154,17 +164,32 @@ class UdpConnection(
                 Log.e(e)
                 null
             }
+        }.also {
+            if (it == null || it.isEmpty()) {
+                startCheckPingTimer()
+            } else {
+                stopCheckPingTimer()
+            }
         }
-    }
-
-    private fun reset() {
-        messageDecoder.clear()
-        sendIndex = 0
-        receiveIndex = 0
-        firstReceived = false
-        sendCounter = 0
     }
 
     private val socket: DatagramSocket get() = wrapper.socket
     private val address: SocketAddress get() = wrapper.address
+
+    private fun startCheckPingTimer() {
+        if (checkPingJob != null) {
+            return
+        }
+        checkPingJob = scope.launch {
+            delay(CONNECTION_LOST_TIMEOUT)
+            socket.doSuspend {
+                close()
+            }
+        }
+    }
+
+    private fun stopCheckPingTimer() {
+        checkPingJob?.cancel()
+        checkPingJob = null
+    }
 }

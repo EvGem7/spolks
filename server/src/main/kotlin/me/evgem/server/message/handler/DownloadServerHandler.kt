@@ -10,7 +10,7 @@ import java.io.File
 class DownloadServerHandler(private val filesDir: File) {
 
     companion object {
-        private const val BUFFER_SIZE = 1_000_000L
+        private const val BUFFER_SIZE = 59_000L
     }
 
     private var downloadIdCounter = System.currentTimeMillis()

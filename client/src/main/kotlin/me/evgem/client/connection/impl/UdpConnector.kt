@@ -40,9 +40,9 @@ class UdpConnector : IConnector {
                 wrapper = wrapper,
                 messageDecoder = getMessageDecoder(),
                 messageEncoder = getMessageEncoder(),
-            )/*.also {
+            ).also {
                 it.send(Message.Ping)
-            }*/
+            }
         } catch (e: IOException) {
             Log.d(e.stackTraceToString())
             Log.i("cannot connect to $host:$port")
