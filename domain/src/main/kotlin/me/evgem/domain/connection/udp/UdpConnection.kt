@@ -90,10 +90,6 @@ class UdpConnection(
         }
         Log.i("socket $address is closed")
     }
-        .onCompletion {
-            Log.i("term $sendCounter")
-
-        }
 
     override suspend fun send(message: Message) {
         mutex.withLock {
@@ -161,7 +157,6 @@ class UdpConnection(
             } catch (e: SocketTimeoutException) {
                 byteArrayOf()
             } catch (e: IOException) {
-                Log.e(e)
                 null
             }
         }.also {
