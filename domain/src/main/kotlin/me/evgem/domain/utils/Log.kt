@@ -4,7 +4,7 @@ import java.util.*
 
 object Log {
 
-    private const val DEBUG = true
+    private const val DEBUG = false
 
     fun i(msg: String) {
         println("${time()} $msg")

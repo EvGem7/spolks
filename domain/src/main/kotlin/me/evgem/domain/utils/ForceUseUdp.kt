@@ -1,3 +1,3 @@
 package me.evgem.domain.utils
 
-val forceUseUdp = false
+val forceUseUdp = true
